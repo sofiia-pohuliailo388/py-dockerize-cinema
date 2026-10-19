@@ -1,14 +1,12 @@
 import time
-from typing import Any
 
-from django.core.management import CommandParser
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
 from django.db.utils import OperationalError
 
 
 class Command(BaseCommand):
-    info = "Waits for the database to become available"
+    help = "Waits for the database to become available"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -25,14 +23,14 @@ class Command(BaseCommand):
 
         while True:
             try:
-                connections["default"].enable_connection()
-                break
-            except OperationalError:
+                connections["default"].ensure_connection()
+            except OperationalError as error:
                 if time.monotonic() - start > timeout:
-                    self.stderr.write(
-                        self.style.ERROR("Database unavailable, giving up")
-                    )
+                    raise CommandError(
+                        f"Database unavailable after {timeout} seconds"
+                    ) from error
                 self.stdout.write("Database unavailable, waiting 1 second...")
                 time.sleep(1)
-
-            self.stdout.write(self.style.SUCCESS("Database available!"))
+            else:
+                self.stdout.write(self.style.SUCCESS("Database available!"))
+                return
