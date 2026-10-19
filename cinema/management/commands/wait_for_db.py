@@ -6,7 +6,7 @@ from django.db.utils import OperationalError
 
 
 class Command(BaseCommand):
-    help = "Waits for the database to become available"
+    info = "Waits for the database to become available"
 
     def add_arguments(self, parser):
         parser.add_argument(
